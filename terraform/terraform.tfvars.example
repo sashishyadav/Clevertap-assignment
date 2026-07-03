@@ -1,0 +1,30 @@
+# Copy to terraform.tfvars and adjust as needed.
+
+project_name = "engagement-platform"
+environment  = "prod"
+region       = "ap-south-1"
+
+# Networking
+vpc_cidr                   = "10.0.0.0/16"
+az_count                   = 3
+single_nat_gateway         = true # set false for prod-grade NAT HA (higher cost)
+restrict_alb_to_cloudfront = true # ALB accepts traffic only from CloudFront
+
+# Application
+container_image       = "public.ecr.aws/nginx/nginx:stable"
+container_port        = 80
+service_desired_count = 2
+service_min_capacity  = 2
+service_max_capacity  = 20
+off_hours_min_capacity = 1
+
+# TLS (leave empty to expose HTTP only for a quick demo)
+acm_certificate_arn = ""
+
+# Database
+db_instance_class = "db.t4g.medium"
+db_multi_az       = true
+
+# Cache
+cache_node_type    = "cache.t4g.small"
+cache_num_replicas = 1

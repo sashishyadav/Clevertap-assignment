@@ -1,0 +1,83 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="engagement-platform" id="arch-1">
+    <mxGraphModel dx="1100" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="users" value="Users&#10;(millions)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="r53" value="Route 53&#10;(failover routing)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="220" y="40" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cf" value="CloudFront + WAF" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="420" y="40" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="S3 static assets&#10;(private, OAC)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="820" y="25" width="130" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="vpc" value="AWS Region (primary) — VPC 10.0.0.0/16" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;dashed=0;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="740" height="520" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pub" value="Public subnets (3 AZs)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="70" y="180" width="680" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="alb" value="Application Load Balancer&#10;(HTTPS / ACM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="110" y="215" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="nat" value="NAT Gateway" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="520" y="215" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="priv" value="Private subnets (3 AZs)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="70" y="320" width="680" height="320" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ecs" value="ECS Fargate service&#10;(FARGATE base + FARGATE_SPOT burst, ARM64)" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="110" y="360" width="380" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" value="Task&#10;FARGATE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="130" y="400" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="Task&#10;SPOT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="250" y="400" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="t3" value="Task&#10;SPOT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="370" y="400" width="100" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="redis" value="ElastiCache Redis&#10;(Multi-AZ, cache-aside)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="540" y="360" width="160" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="rds" value="RDS PostgreSQL&#10;(Multi-AZ, encrypted)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="540" y="480" width="160" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sm" value="Secrets Manager&#10;(DB creds)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="130" y="540" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="asg" value="Application Auto Scaling&#10;CPU + ALB RPS + scheduled off-hours" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="540" width="210" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dr" value="AWS Region (DR) — warm standby&#10;RDS cross-region read replica" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="820" y="360" width="300" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" style="endArrow=block;html=1;" edge="1" parent="1" source="users" target="r53"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="endArrow=block;html=1;" edge="1" parent="1" source="r53" target="cf"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" style="endArrow=block;html=1;" value="dynamic (default)" edge="1" parent="1" source="cf" target="alb"><mxGeometry x="-0.5" relative="1" as="geometry"><mxPoint x="-40" y="-8" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="e4" style="endArrow=block;html=1;" edge="1" parent="1" source="alb" target="ecs"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="endArrow=block;html=1;" edge="1" parent="1" source="ecs" target="redis"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" style="endArrow=block;html=1;" edge="1" parent="1" source="ecs" target="rds"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e7" style="endArrow=block;html=1;dashed=1;" value="cache miss" edge="1" parent="1" source="redis" target="rds"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e8" style="endArrow=block;html=1;dashed=1;" value="async replication" edge="1" parent="1" source="rds" target="dr"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e9" style="endArrow=block;html=1;dashed=1;" edge="1" parent="1" source="asg" target="ecs"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e10" style="endArrow=block;html=1;dashed=1;" edge="1" parent="1" source="ecs" target="sm"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e11" style="endArrow=block;html=1;" value="/static/* (edge-cached)" edge="1" parent="1" source="cf" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
