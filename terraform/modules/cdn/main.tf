@@ -1,18 +1,14 @@
 # ---------------------------------------------------------------------------
-# S3 (private static assets) + CloudFront (CDN).
-# CloudFront has two origins:
-#   - ALB          -> dynamic app traffic (default behavior)
-#   - S3 bucket    -> /static/* served from the edge, private via OAC
-# Offloading static assets to the edge cuts ALB/ECS load and egress cost.
+# CDN module: private S3 static-assets bucket + CloudFront with two origins
+# (ALB for dynamic traffic, S3 for /static/* via Origin Access Control).
 # ---------------------------------------------------------------------------
+data "aws_caller_identity" "current" {}
 
 # --- S3 bucket --------------------------------------------------------------
 resource "aws_s3_bucket" "assets" {
-  bucket = "${local.name}-assets-${data.aws_caller_identity.current.account_id}"
-  tags   = { Name = "${local.name}-assets" }
+  bucket = "${var.name}-assets-${data.aws_caller_identity.current.account_id}"
+  tags   = { Name = "${var.name}-assets" }
 }
-
-data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket_public_access_block" "assets" {
   bucket                  = aws_s3_bucket.assets.id
@@ -39,7 +35,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "assets" {
   }
 }
 
-# Lifecycle: drop non-current versions after 90 days to control storage cost.
 resource "aws_s3_bucket_lifecycle_configuration" "assets" {
   bucket = aws_s3_bucket.assets.id
   rule {
@@ -53,15 +48,13 @@ resource "aws_s3_bucket_lifecycle_configuration" "assets" {
 }
 
 # --- CloudFront -------------------------------------------------------------
-# Origin Access Control lets CloudFront read the private bucket (no public S3).
 resource "aws_cloudfront_origin_access_control" "s3" {
-  name                              = "${local.name}-s3-oac"
+  name                              = "${var.name}-s3-oac"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
 
-# AWS-managed policies (data sources so we don't hard-code IDs).
 data "aws_cloudfront_cache_policy" "caching_optimized" {
   name = "Managed-CachingOptimized"
 }
@@ -75,16 +68,13 @@ data "aws_cloudfront_origin_request_policy" "all_viewer" {
 }
 
 resource "aws_cloudfront_distribution" "this" {
-  enabled             = true
-  comment             = "${local.name} CDN"
-  default_root_object = ""
-  price_class         = "PriceClass_100" # NA + EU edges only — cost saving
+  enabled     = true
+  comment     = "${var.name} CDN"
+  price_class = "PriceClass_100"
 
-  # Dynamic origin: the ALB.
   origin {
-    domain_name = aws_lb.this.dns_name
+    domain_name = var.alb_dns_name
     origin_id   = "alb"
-
     custom_origin_config {
       http_port              = 80
       https_port             = 443
@@ -93,25 +83,21 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
-  # Static origin: the private S3 bucket via OAC.
   origin {
     domain_name              = aws_s3_bucket.assets.bucket_regional_domain_name
     origin_id                = "s3-assets"
     origin_access_control_id = aws_cloudfront_origin_access_control.s3.id
   }
 
-  # Default behavior -> ALB (dynamic, uncached).
   default_cache_behavior {
-    target_origin_id       = "alb"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    cached_methods         = ["GET", "HEAD"]
-
+    target_origin_id         = "alb"
+    viewer_protocol_policy   = "redirect-to-https"
+    allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods           = ["GET", "HEAD"]
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
     origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
   }
 
-  # /static/* -> S3, aggressively cached at the edge.
   ordered_cache_behavior {
     path_pattern           = "/static/*"
     target_origin_id       = "s3-assets"
@@ -119,8 +105,7 @@ resource "aws_cloudfront_distribution" "this" {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-
-    cache_policy_id = data.aws_cloudfront_cache_policy.caching_optimized.id
+    cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
   }
 
   restrictions {
@@ -129,23 +114,15 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
-  # Demo uses the default *.cloudfront.net cert. For a custom domain, supply an
-  # ACM cert in us-east-1 and set aliases + viewer_certificate accordingly.
   viewer_certificate {
     cloudfront_default_certificate = true
   }
 
-  # NOTE: to attach WAF to CloudFront, create a scope="CLOUDFRONT" Web ACL in
-  # us-east-1 (separate provider alias) and set web_acl_id here. The regional
-  # WAF in waf.tf already protects the ALB origin.
-
-  tags = { Name = "${local.name}-cdn" }
+  tags = { Name = "${var.name}-cdn" }
 }
 
-# --- Bucket policy: allow only this CloudFront distribution to read ----------
 resource "aws_s3_bucket_policy" "assets" {
   bucket = aws_s3_bucket.assets.id
-
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{

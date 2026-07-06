@@ -24,6 +24,29 @@ cache-aside layer — all in private subnets across 3 AZs, provisioned by Terraf
 See [`DESIGN.md`](DESIGN.md) for why ECS Fargate over EKS / Lambda / EC2, and the
 cost + security rationale.
 
+## Terraform structure
+
+The root module composes the environment from five reusable modules, so each
+concern is independently readable, testable, and reusable across environments
+(dev/staging/prod) by adding a thin root per environment.
+
+```
+terraform/
+├── main.tf                 # root — wires the modules together
+├── variables.tf            # root inputs
+├── outputs.tf              # root outputs
+├── providers.tf · versions.tf · terraform.tfvars.example
+└── modules/
+    ├── network/            # VPC, subnets, NAT, routes, Flow Logs, security groups
+    ├── loadbalancing/      # ALB, target group, listeners, WAF
+    ├── data/               # RDS, ElastiCache, Secrets Manager
+    ├── compute/            # ECS Fargate, IAM, Application Auto Scaling
+    └── cdn/                # S3 static assets + CloudFront
+```
+
+Dependency flow: `network → data + loadbalancing → compute + cdn` (wired via
+module outputs/inputs in `main.tf`).
+
 ## What the Terraform creates
 
 - **VPC** — public/private subnets across 3 AZs, IGW, NAT, route tables, Flow Logs
