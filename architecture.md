@@ -70,9 +70,3 @@ flowchart LR
     F --> G[Near-zero idle cost]
     D --> H[Scale in after spike<br/>cooldown 300s]
 ```
-
-## How to produce the formal diagram
-
-- **Draw.io / diagrams.net:** open `architecture.drawio` (File → Open), or import
-  the Mermaid above via *Arrange → Insert → Advanced → Mermaid*.
-- Export to PNG/PDF for submission alongside `DESIGN.md`.
